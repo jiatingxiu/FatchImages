@@ -10,10 +10,14 @@ namespace GetImages
 {
     public class Class1
     {
+        private string globePath;
+
         public Class1()
         {
+            globePath = DealDir(System.IO.Path.Combine(Environment.CurrentDirectory, "images"));
+
             int num = 1;
-            while (num < 171)
+            while (num < 10)
             {
                 DoFetch(num);
                 num++;
@@ -21,7 +25,7 @@ namespace GetImages
             Console.WriteLine("=========================END==========================");
         }
 
-        public void DoFetch(int pageNum)
+        private void DoFetch(int pageNum)
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://www.ipc.me/shoulu/pic-list-" + pageNum + ".html");
             request.Credentials = System.Net.CredentialCache.DefaultCredentials;
@@ -35,7 +39,7 @@ namespace GetImages
             }
         }
 
-        public List<Uri> FetchLinksFromSource(string htmlSource)
+        private List<Uri> FetchLinksFromSource(string htmlSource)
         {
             List<Uri> links = new List<Uri>();
             string regexImgSrc = @"<img[^>]*?src\s*=\s*[""']?([^'"" >]+?)[ '""][^>]*?>";
@@ -53,18 +57,25 @@ namespace GetImages
 
                 using (WebClient myWebClient = new WebClient())
                 {
-                    myWebClient.DownloadFileAsync(new Uri(href), System.IO.Path.Combine(Environment.CurrentDirectory, "images", href.Substring(href.Length - 15)));
+                    myWebClient.DownloadFileAsync(new Uri(href), System.IO.Path.Combine(globePath, System.IO.Path.GetRandomFileName() + System.IO.Path.GetExtension(href)));
                 }
             }
             return links;
         }
 
-        public static bool CheckIsUrlFormat(string strValue)
+        private string DealDir(string path)
+        {
+            if (!System.IO.Directory.Exists(path))
+                System.IO.Directory.CreateDirectory(path);
+            return path;
+        }
+
+        private bool CheckIsUrlFormat(string strValue)
         {
             return CheckIsFormat(@"http://?([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)?", strValue);
         }
 
-        public static bool CheckIsFormat(string strRegex, string strValue)
+        private bool CheckIsFormat(string strRegex, string strValue)
         {
             if (strValue != null && strValue.Trim() != "")
             {
