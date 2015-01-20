@@ -5,38 +5,46 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace GetImages
 {
     public class Class1
     {
         private string globePath;
-
+        AutoResetEvent autoResetEvent = new AutoResetEvent(false);
         public Class1()
         {
             globePath = DealDir(System.IO.Path.Combine(Environment.CurrentDirectory, "images"));
 
             int num = 1;
-            while (num < 10)
+            while (num <= 100)
             {
                 DoFetch(num);
                 num++;
             }
-            Console.WriteLine("=========================END==========================");
+            Console.WriteLine("=========================Start==========================");
         }
 
         private void DoFetch(int pageNum)
         {
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://www.ipc.me/shoulu/pic-list-" + pageNum + ".html");
-            request.Credentials = System.Net.CredentialCache.DefaultCredentials;
-            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-            if (response.StatusCode == HttpStatusCode.OK)
+            ThreadPool.QueueUserWorkItem(_ =>
             {
-                using (StreamReader sr = new StreamReader(response.GetResponseStream()))
+                autoResetEvent.Reset();
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://www.123123.com/?page=" + pageNum);
+                request.Credentials = System.Net.CredentialCache.DefaultCredentials;
+                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                if (response.StatusCode == HttpStatusCode.OK)
                 {
-                    List<Uri> links = FetchLinksFromSource(sr.ReadToEnd());
+                    using (StreamReader sr = new StreamReader(response.GetResponseStream()))
+                    {
+                        List<Uri> links = FetchLinksFromSource(sr.ReadToEnd());
+                        Console.WriteLine("=========================" + pageNum + "fatch END==========================");
+                    }
                 }
-            }
+                
+                autoResetEvent.Set();
+            });
         }
 
         private List<Uri> FetchLinksFromSource(string htmlSource)
@@ -57,7 +65,14 @@ namespace GetImages
 
                 using (WebClient myWebClient = new WebClient())
                 {
-                    myWebClient.DownloadFileAsync(new Uri(href), System.IO.Path.Combine(globePath, System.IO.Path.GetRandomFileName() + System.IO.Path.GetExtension(href)));
+                    try
+                    {
+                        myWebClient.DownloadFile(new Uri(href), System.IO.Path.Combine(globePath, System.IO.Path.GetRandomFileName() + System.IO.Path.GetExtension(href)));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
                 }
             }
             return links;
