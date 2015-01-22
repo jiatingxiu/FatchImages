@@ -12,7 +12,6 @@ namespace GetImages
     public class Class1
     {
         private string globePath;
-        AutoResetEvent autoResetEvent = new AutoResetEvent(false);
         public Class1()
         {
             globePath = DealDir(System.IO.Path.Combine(Environment.CurrentDirectory, "images"));
@@ -30,8 +29,7 @@ namespace GetImages
         {
             ThreadPool.QueueUserWorkItem(_ =>
             {
-                autoResetEvent.Reset();
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://www.123123.com/?page=" + pageNum);
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://me2-sex.lofter.com/tag/美女摄影?page=" + pageNum);
                 request.Credentials = System.Net.CredentialCache.DefaultCredentials;
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                 if (response.StatusCode == HttpStatusCode.OK)
@@ -42,8 +40,6 @@ namespace GetImages
                         Console.WriteLine("=========================" + pageNum + "fatch END==========================");
                     }
                 }
-                
-                autoResetEvent.Set();
             });
         }
 
